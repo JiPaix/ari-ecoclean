@@ -9,7 +9,7 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
+    "resolveJsonModule": false,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
@@ -19,7 +19,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
-  },
-  "include": ["packages/frontend/src/**/*.ts", "packages/frontend/src/**/*.tsx", "packages/frontend/src/**/*.vue"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  }
 }
