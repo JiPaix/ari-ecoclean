@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@teckel/vue-barcode-reader": "^1.1.6",
+    "@teckel/vue-barcode-reader": "^1.1.7",
     "vue": "^3.4.15",
     "vuetify": "^3.5.4",
     "@mdi/js": "^7.4.47",
