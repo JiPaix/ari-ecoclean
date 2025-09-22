@@ -6,7 +6,7 @@ import ecoclean from './assets/ecoclean.jpg'
 import n1 from './assets/n1.jpg'
 import {defineAsyncComponent} from "vue";
 
-
+const keysOnly = computed(() => pieces.map(p => p.key));
 
 const decodedText = ref('')
 const decoded = computed(() => conditions(decodedText.value))
@@ -56,7 +56,7 @@ function reset() {
         <v-col cols="12">
           <v-img
             cover
-            :src="pieces.includes(decodedText) ? ecoclean : n1"
+            :src="keysOnly.includes(decodedText) ? ecoclean : n1"
           ></v-img>
         </v-col>
         <v-col cols="12" class="text-center">
