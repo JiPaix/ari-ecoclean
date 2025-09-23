@@ -1,26 +1,29 @@
+// vite.config.ts
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
+import mkcert from 'vite-plugin-mkcert'
+import tailwindcss from '@tailwindcss/vite'
 
-// https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
-    vue({ 
-      template: { transformAssetUrls }
-    }),
-    vuetify(),
+    vue(),
+    tailwindcss(),
+    ViteImageOptimizer({ jpg: { quality: 70 } }),
+    ...(mode === 'development' ? [mkcert()] : [])
   ],
   base: 'https://jipaix.github.io/ari-ecoclean/',
   build: {
+    minify: 'terser',
+    terserOptions: { maxWorkers: 3 },
     rollupOptions: {
       output: {
         manualChunks(id: string) {
-          // if(id.endsWith('.css')) return '@css'
-          // if(id.includes('vuetify')) return '@vuetify'
-          // if(id.includes('@teckel')) return '@teckel'
-          // if(id.includes('@xzing')) return '@xzing'
+          if (id.endsWith('.css')) return '@css'
+          if (id.includes('@teckel')) return '@teckel'
+          if (id.includes('@xzing')) return '@xzing'
         }
       }
     }
   }
-})
+}))
