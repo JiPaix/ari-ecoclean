@@ -1,156 +1,127 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
-import ecoclean from './assets/ecoclean.jpg'
-import landscape from './assets/landscape.png'
-import n1 from './assets/n1.jpg'
-import pieces from './assets/pieces'
-import './assets/style.css'
+import ecoclean from './assets/ecoclean.jpg';
+import landscape from './assets/landscape.png';
+import n1 from './assets/n1.jpg';
+import pieces from './assets/pieces';
+import './assets/style.css';
+import { computed, onMounted, ref } from 'vue';
 
-const isLandscape = ref(false)
-
+const reference = ref('');
+const success = ref<'n5' | 'n6' | 'nope' | null>(null);
+const input = ref<HTMLInputElement>();
+const formClass = ref<string | null>('hidden');
+const imgClass = "aspect-auto object-contain"; // height controlled by container
 onMounted(() => {
-  const mql = window.matchMedia('(orientation: landscape)')
-  // set initial value
-  isLandscape.value = mql.matches
+  input.value?.focus();
+  formClass.value = "w-full gap-2";
+});
 
-  // update on change
-  const handler = (e: MediaQueryListEvent) => {
-    isLandscape.value = e.matches
+const found = computed(() => pieces.find(v => v.key === reference.value.toLocaleUpperCase()));
+
+function first5HasLetterAndDigit(s: string) {
+  let hasLetter = false;
+  let hasDigit = false;
+  for (let i = 0; i < 5 && i < s.length; i++) {
+    const ch = s.charCodeAt(i);
+    if (ch >= 48 && ch <= 57) hasDigit = true;
+    if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122)) hasLetter = true;
+    if (hasLetter && hasDigit) return true;
   }
-  mql.addEventListener('change', handler)
-
-  onUnmounted(() => {
-    mql.removeEventListener('change', handler)
-  })
-})
-
-
-const decodedText = ref('')
-const toclean = computed(() => pieces.find(l => l.key === decodedText.value))
-
-const StreamBarcodeReader = defineAsyncComponent(async () => {
-  const imp = await import('@teckel/vue-barcode-reader')
-  return imp.StreamBarcodeReader
-})
+  return false;
+}
 
 function conditions(str: string): boolean {
   if (str.length < 5) return false
   if (str.startsWith('02000') || str.startsWith('2000')) return false
   if (str.includes('MAD') || str.includes('CGA')) return false
   if (str.startsWith('000')) return false
+  if (!first5HasLetterAndDigit(str)) return false;
   return true
 }
 
-function onDecode(result: string) {
-  if (!conditions(result)) {
-    return
-  }
-  decodedText.value = result
-  scan.value = false
+function go() {
+  found.value ? success.value = "n6" : conditions(reference.value) ? success.value = "n5" : success.value = "nope";
 }
 
-function resetScan() {
-  decodedText.value = ''
-  scan.value = true
+function reset() {
+  success.value = null;
+  reference.value = "";
 }
-
-const scan = ref(true)
-
 </script>
 
 <template>
-  <main class="flex flex-row h-[100dvh] bg-slate-700 text-white overflow-hidden">
-    <!-- Rotate warning overlay -->
-    <div
-      v-if="!isLandscape"
-      id="rotate-warning"
-      class="text-xl flex flex-col fixed inset-0 bg-slate-700 text-white items-center justify-center"
-    >
-      Veuillez orienter votre appareil en mode paysage
-      <img :src="landscape" class="invert" />
-    </div>
+  <!-- full-screen no-scroll container -->
+  <main class="w-screen h-screen overflow-hidden bg-slate-700 p-6 flex items-center justify-center">
+    <!-- central column that can shrink; min-h-0 lets children flex properly -->
+    <div class="w-full max-w-4xl h-full flex flex-col min-h-0">
 
-    <!-- Left side -->
-    <div
-      v-if="isLandscape"
-      class="main-content flex-grow flex items-center justify-center p-2 min-h-0 min-w-0"
-    >
-      <template v-if="scan">
-        <div
-          class="w-full h-full max-w-3xl aspect-[16/9] bg-black rounded-lg overflow-hidden"
+      <!-- form view -->
+      <form
+        v-if="success === null"
+        @submit.prevent="go"
+        :class="formClass"
+        class="flex flex-col items-stretch gap-4 bg-white/5 rounded-lg p-4 shadow-lg min-h-0"
         >
-          <StreamBarcodeReader
-            class="h-full w-full object-cover"
-            :ms-between-decoding="50"
-            @decode="onDecode"
-            :no-front-cameras="true"
-          />
-        </div>
-      </template>
 
-      <template v-else-if="decodedText">
-        <div
-          v-if="toclean"
-          class="flex flex-col items-center gap-4 px-4 max-h-full overflow-hidden"
-        >
-          <div class="text-4xl font-semibold">{{ toclean.key }}</div>
-          <div class="text-2xl">{{ toclean.value }}</div>
-          <img
-            loading="lazy"
-            :src="ecoclean"
-            class="max-h-[60%] object-contain"
-          />
-        </div>
-        <div
-          v-else
-          class="flex flex-col items-center gap-4 px-4 max-h-full overflow-hidden"
-        >
-          <div class="text-4xl font-semibold">{{ decodedText }}</div>
-          <img
-            loading="lazy"
-            :src="n1"
-            class="max-h-[60%] object-contain"
-          />
-        </div>
-      </template>
-    </div>
+        <label for="reference" class="block text-white">
+          <h1 class="text-[clamp(18px,4vw,32px)] leading-tight font-semibold">Référence</h1>
+        </label>
 
-    <!-- Right side -->
-    <div
-      v-if="isLandscape"
-      class="main-content w-1/3 flex flex-col justify-center items-center p-6 bg-slate-800 min-h-0"
-    >
-      <button
-        @click="resetScan()"
-        type="button"
-        class="px-8 py-4 text-2xl cursor-pointer text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        <input
+          ref="input"
+          v-model="reference"
+          type="text"
+          id="reference"
+          class="bg-gray-300 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+          required
+        />
+
+        <!-- submit button kept reasonably tall but uses max-height so it won't force scroll -->
+        <input
+          type="submit"
+          class="w-full bg-red-800 mt-2 h-14 sm:h-16 text-center text-white font-bold cursor-pointer rounded"
+          value="Vérifier"
+        />
+        <!-- spacer that will shrink if needed -->
+        <div class="flex-1 min-h-0"></div>
+      </form>
+
+      <!-- result / image view -->
+      <div
+        v-else
+        class="mt-4 bg-white/5 rounded-lg p-4 flex flex-col items-center justify-between text-white min-h-0"
+        style="height: calc(100% - 1rem);"
       >
-        {{ decodedText ? 'RECOMMENCER' : '' }}
-      </button>
+        <div class="w-full flex-0">
+          <h1 v-if="success === 'n5'" class="text-[clamp(20px,5vw,48px)] font-bold text-center">Conditionnement N5</h1>
+          <h1 v-else-if="success === 'n6'" class="text-[clamp(20px,5vw,48px)] font-bold text-center">Cleanliness N6</h1>
+          <h1 v-else class="text-[clamp(20px,5vw,48px)] font-bold text-center">Erreur</h1>
+        </div>
+
+        <!-- image container: limits image to available space and keeps aspect ratio -->
+        <div class="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden py-4">
+          <img v-if="success === 'n5'" :src="n1" :class="imgClass + ' max-h-[70vh] max-w-full'" />
+          <img v-else-if="success === 'n6'" :src="ecoclean" :class="imgClass + ' max-h-[70vh] max-w-full'" />
+          <img v-else :src="landscape" :class="imgClass + ' max-h-[70vh] max-w-full'" />
+        </div>
+
+        <div class="w-full flex-none mt-4">
+          <button @click="reset" class="w-full bg-red-500 p-3 rounded text-white font-semibold">RECOMMENCER</button>
+        </div>
+      </div>
+
     </div>
   </main>
 </template>
 
-<style>
-video {
-  width: 100%;
+<style scoped>
+/* small helper for responsive clamped text where Tailwind's clamp utilities aren't present */
+h1 {
+  margin: 0;
+}
+
+/* Ensure body/html don't add scrollbars from margins */
+:root, html, body {
   height: 100%;
-  object-fit: cover;
-}
-@media screen and (orientation: landscape) {
-  .main-content {
-    display: flex;
-  }
-  #rotate-warning {
-    display: none;
-  }
-}
-@media screen and (orientation: portrait) {
-  .main-content {
-    display: none;
-  }
-  #rotate-warning {
-    display: flex;
-  }
 }
 </style>

@@ -10,7 +10,6 @@
   },
   "devDependencies": {
     "@mdi/js": "^7.4.47",
-    "@teckel/vue-barcode-reader": "^1.1.8",
     "@vitejs/plugin-vue": "^6.0.1",
     "sharp": "^0.34.4",
     "svgo": "^4.0.0",
