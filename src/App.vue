@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import ecoclean from './assets/ecoclean.jpg';
-import landscape from './assets/landscape.png';
-import n1 from './assets/n1.jpg';
+import n6 from './assets/n6.jpg';
+import n5 from './assets/n5.jpg';
+import badscan from './assets/badscan.jpg'
 import pieces from './assets/pieces';
 import './assets/style.css';
 import { computed, onMounted, ref } from 'vue';
@@ -100,9 +100,9 @@ function reset() {
 
         <!-- image container: limits image to available space and keeps aspect ratio -->
         <div class="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden py-4">
-          <img v-if="success === 'n5'" :src="n1" :class="imgClass + ' max-h-[70vh] max-w-full'" />
-          <img v-else-if="success === 'n6'" :src="ecoclean" :class="imgClass + ' max-h-[70vh] max-w-full'" />
-          <img v-else :src="landscape" :class="imgClass + ' max-h-[70vh] max-w-full'" />
+          <img v-if="success === 'n5'" :src="n5" :class="imgClass + ' max-h-[70vh] max-w-full'" />
+          <img v-else-if="success === 'n6'" :src="n6" :class="imgClass + ' max-h-[70vh] max-w-full'" />
+          <img v-else :src="badscan" :class="imgClass + ' max-h-[70vh] max-w-full'" />
         </div>
 
         <div class="w-full flex-none mt-4">
