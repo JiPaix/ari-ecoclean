@@ -1,46 +1,51 @@
 <script setup lang="ts">
 import n6 from './assets/n6.jpg';
 import n5 from './assets/n5.jpg';
-import badscan from './assets/badscan.jpg'
+import badscan from './assets/badscan.png'
 import pieces from './assets/pieces';
 import './assets/style.css';
 import { computed, onMounted, ref } from 'vue';
+
+// Validate strings very fast according to the rules described.
+const RE_REJECT_200 = /^0?200/;            // règle 3 : commence par 200 ou 0200 -> refuse
+const RE_REJECT_MAD = /^MAD/;              // règle 4 : commence par MAD -> refuse
+const RE_REJECT_CGA = /CGA/;               // règle 5 : contient CGA -> refuse
+
+const RE_ACCEPT_FORMAT1 = /^[A-Za-z]?\d{3}[A-Za-z]\d+$/; // règle 1 (LETTRE_NOMBRE_NOMBRE_NOMBRE_LETTRE_NOMBRE++)
+const RE_ACCEPT_FORMAT2 = /^\d{5,8}$/;                   // règle 2 (ENTRE 5 ET 8 NOMBRE)
+
+const imgClass = "aspect-auto object-contain"; // height controlled by container
 
 const reference = ref('');
 const success = ref<'n5' | 'n6' | 'nope' | null>(null);
 const input = ref<HTMLInputElement>();
 const formClass = ref<string | null>('hidden');
-const imgClass = "aspect-auto object-contain"; // height controlled by container
+
 onMounted(() => {
   input.value?.focus();
   formClass.value = "w-full gap-2";
 });
 
+
 const found = computed(() => pieces.find(v => v.key === reference.value.toLocaleUpperCase()));
+const ispart = computed(() => {
+  const upref = reference.value.toLocaleUpperCase()
+  if(found.value) return true;
+  // Rejets d'abord (court-circuit)
+  if (RE_REJECT_200.test(upref)) return false;
+  if (RE_REJECT_MAD.test(upref)) return false;
+  if (RE_REJECT_CGA.test(upref)) return false;
 
-function first5HasLetterAndDigit(s: string) {
-  let hasLetter = false;
-  let hasDigit = false;
-  for (let i = 0; i < 5 && i < s.length; i++) {
-    const ch = s.charCodeAt(i);
-    if (ch >= 48 && ch <= 57) hasDigit = true;
-    if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122)) hasLetter = true;
-    if (hasLetter && hasDigit) return true;
-  }
+  // Acceptions ensuite
+  if (RE_ACCEPT_FORMAT1.test(upref)) return true;
+  if (RE_ACCEPT_FORMAT2.test(upref)) return true;
+
+  // Par défaut, rejeter
   return false;
-}
-
-function conditions(str: string): boolean {
-  if (str.length < 5) return false
-  if (str.startsWith('02000') || str.startsWith('2000')) return false
-  if (str.includes('MAD') || str.includes('CGA')) return false
-  if (str.startsWith('000')) return false
-  if (!first5HasLetterAndDigit(str)) return false;
-  return true
-}
+})
 
 function go() {
-  found.value ? success.value = "n6" : conditions(reference.value) ? success.value = "n5" : success.value = "nope";
+  !ispart.value ? success.value = "nope" : found.value ? success.value = "n6" : success.value = "n5"
 }
 
 function reset() {
@@ -50,68 +55,86 @@ function reset() {
 </script>
 
 <template>
-  <!-- full-screen no-scroll container -->
-  <main class="w-screen h-screen overflow-hidden bg-slate-700 p-6 flex items-center justify-center">
-    <!-- central column that can shrink; min-h-0 lets children flex properly -->
-    <div class="w-full max-w-4xl h-full flex flex-col min-h-0">
+<main class="w-screen h-screen overflow-hidden bg-slate-700 p-6 flex items-center justify-center">
+  <div class="w-full max-w-4xl h-full flex flex-col min-h-0">
 
-      <!-- form view -->
-      <form
-        v-if="success === null"
-        @submit.prevent="go"
-        :class="formClass"
-        class="flex flex-col items-stretch gap-4 bg-white/5 rounded-lg p-4 shadow-lg min-h-0"
-        >
+    <!-- form view -->
+    <form
+      v-if="success === null"
+      @submit.prevent="go"
+      :class="formClass"
+      class="flex flex-col gap-4 bg-white/5 rounded-lg p-4 shadow-lg min-h-0 h-full"
+    >
+      <label for="reference" class="block text-white">
+        <h1 class="leading-tight font-semibold text-[clamp(18px,calc(1.6vw+0.35vh),48px)]">Référence</h1>
+      </label>
 
-        <label for="reference" class="block text-white">
-          <h1 class="text-[clamp(18px,4vw,32px)] leading-tight font-semibold">Référence</h1>
-        </label>
+      <input
+        ref="input"
+        v-model="reference"
+        type="text"
+        id="reference"
+        class="block w-full p-3 text-[clamp(13px,calc(1vw+0.25vh),18px)] rounded-lg bg-slate-600 border border-slate-500 text-white
+               placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-colors"
+        placeholder="Entrez la référence"
+        required
+      />
 
-        <input
-          ref="input"
-          v-model="reference"
-          type="text"
-          id="reference"
-          class="bg-gray-300 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
-          required
-        />
+      <input
+        type="submit"
+        class="w-full rounded-lg font-bold text-white text-center cursor-pointer shadow-sm
+               bg-red-600 hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-300
+               transition-colors text-[clamp(14px,calc(1.1vw+0.25vh),18px)] py-[clamp(10px,calc(1.2vw+0.3vh),14px)]"
+        value="Vérifier"
+      />
 
-        <!-- submit button kept reasonably tall but uses max-height so it won't force scroll -->
-        <input
-          type="submit"
-          class="w-full bg-red-800 mt-2 h-14 sm:h-16 text-center text-white font-bold cursor-pointer rounded"
-          value="Vérifier"
-        />
-        <!-- spacer that will shrink if needed -->
-        <div class="flex-1 min-h-0"></div>
-      </form>
+      <!-- spacer flexible pour garder tout visible -->
+      <div class="flex-1 min-h-0"></div>
+    </form>
 
-      <!-- result / image view -->
-      <div
-        v-else
-        class="mt-4 bg-white/5 rounded-lg p-4 flex flex-col items-center justify-between text-white min-h-0"
-        style="height: calc(100% - 1rem);"
-      >
-        <div class="w-full flex-0">
-          <h1 v-if="success === 'n5'" class="text-[clamp(20px,5vw,48px)] font-bold text-center">Conditionnement N5</h1>
-          <h1 v-else-if="success === 'n6'" class="text-[clamp(20px,5vw,48px)] font-bold text-center">Cleanliness N6</h1>
-          <h1 v-else class="text-[clamp(20px,5vw,48px)] font-bold text-center">Erreur</h1>
-        </div>
-
-        <!-- image container: limits image to available space and keeps aspect ratio -->
-        <div class="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden py-4">
-          <img v-if="success === 'n5'" :src="n5" :class="imgClass + ' max-h-[70vh] max-w-full'" />
-          <img v-else-if="success === 'n6'" :src="n6" :class="imgClass + ' max-h-[70vh] max-w-full'" />
-          <img v-else :src="badscan" :class="imgClass + ' max-h-[70vh] max-w-full'" />
-        </div>
-
-        <div class="w-full flex-none mt-4">
-          <button @click="reset" class="w-full bg-red-500 p-3 rounded text-white font-semibold">RECOMMENCER</button>
-        </div>
+    <!-- result / image view -->
+    <div
+      v-else
+      class="mt-4 bg-white/5 rounded-lg p-4 flex flex-col items-center justify-between text-white min-h-0 h-full"
+    >
+      <div class="w-full flex-none text-center mb-2">
+        <h1 v-if="success === 'n5'" class="font-bold text-center text-[clamp(20px,calc(2.2vw+0.4vh),48px)]">Conditionnement N5</h1>
+        <h1 v-else-if="success === 'n6'" class="font-bold text-center text-[clamp(20px,calc(2.2vw+0.4vh),48px)]">Cleanliness N6</h1>
+        <h1 v-else class="font-bold text-center text-[clamp(20px,calc(2.2vw+0.4vh),48px)]">Erreur</h1>
+        <span class="block text-[clamp(16px,calc(1.3vw+0.4vh),18px)] mt-1 truncate">{{ reference }}</span>
       </div>
 
+      <div class="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden py-4">
+        <img
+          v-if="success === 'n5'"
+          :src="n5"
+          :class="imgClass + ' object-contain max-h-[calc(100vh-220px)] max-w-full'"
+        />
+        <img
+          v-else-if="success === 'n6'"
+          :src="n6"
+          :class="imgClass + ' object-contain max-h-[calc(100vh-220px)] max-w-full'"
+        />
+        <img
+          v-else
+          :src="badscan"
+          :class="imgClass + ' object-contain max-h-[calc(100vh-220px)] max-w-full'"
+        />
+      </div>
+
+      <div class="w-full flex-none mt-4">
+        <button
+          @click="reset"
+          class="w-full rounded-lg font-bold text-white text-center cursor-pointer shadow-sm
+                 bg-red-600 hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-300
+                 transition-colors text-[clamp(14px,calc(1.1vw+0.25vh),18px)] py-[clamp(10px,calc(1.2vw+0.3vh),14px)] uppercase"
+        >
+          RECOMMENCER
+        </button>
+      </div>
     </div>
-  </main>
+  </div>
+</main>
 </template>
 
 <style scoped>

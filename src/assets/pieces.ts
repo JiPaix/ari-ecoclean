@@ -1139,6 +1139,21 @@ export default [
         "type": "core"
     },
     {
+        "key": "M029A6321224",
+        "value": "ANNEAU DE SURETE",
+        "type": "core",
+    },
+    {
+        "key": "M029A6321213",
+        "value": "ANNEAU DE SURETE",
+        "type": "core",
+    },
+    {
+        "key": "M029A6321242",
+        "value": "PIGNON DOUBLE CONIQUE GAUCHE",
+        "type": "core",
+    },
+    {
         "key": "M029A6315121",
         "value": "CARTER LATERAL DROIT",
         "type": "safety"

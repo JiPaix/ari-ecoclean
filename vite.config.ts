@@ -9,19 +9,22 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
     tailwindcss(),
-    ViteImageOptimizer({ jpg: { quality: 70 } }),
+    ViteImageOptimizer({ jpg: { quality: 60 }, png: { quality: 60 } }),
     ...(mode === 'development' ? [mkcert()] : [])
   ],
   base: 'https://jipaix.github.io/ari-ecoclean/',
   build: {
     minify: 'terser',
-    terserOptions: { maxWorkers: 3 },
+    terserOptions: { maxWorkers: 3, compress: { passes: 2 }, mangle: true },
+    sourcemap: mode === 'development',
+    assetsInlineLimit: 1024,
     rollupOptions: {
       output: {
         manualChunks(id: string) {
+          if (id.includes('node_modules')) {
+            if (id.includes('vue')) return 'vendor_vue'
+          }
           if (id.endsWith('.css')) return '@css'
-          if (id.includes('@teckel')) return '@teckel'
-          if (id.includes('@xzing')) return '@xzing'
         }
       }
     }
