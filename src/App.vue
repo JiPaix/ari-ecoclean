@@ -3,7 +3,7 @@ import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue
 import ecoclean from './assets/ecoclean.jpg'
 import landscape from './assets/landscape.png'
 import n1 from './assets/n1.jpg'
-import pieces from './assets/pieces'
+import pieces from './assets/parts.json'
 import './assets/style.css'
 
 const isLandscape = ref(false)
@@ -26,7 +26,7 @@ onMounted(() => {
 
 
 const decodedText = ref('')
-const toclean = computed(() => pieces.find(l => l.key === decodedText.value))
+const toclean = computed(() => pieces.find(l => l === decodedText.value))
 
 const StreamBarcodeReader = defineAsyncComponent(async () => {
   const imp = await import('@teckel/vue-barcode-reader')
